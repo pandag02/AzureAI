@@ -1,3 +1,9 @@
+##############################################################
+'''
+fastapi 사용해서 api 호출.
+명령어: uvicorn (파일이름):app --reload
+*파일이름: 파일 형식자 뺀 이름
+'''
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -25,7 +31,7 @@ class PromptRequest(BaseModel):
     temperature: float = 0.7
 
 # 엔드포인트 정의
-@app.post("/generate-text")
+@app.post("/generate-text") 
 async def generate_text(request: PromptRequest):
     # Azure OpenAI API 호출 URL 생성
     url = URL
