@@ -1,8 +1,8 @@
 ##############################################################
 '''
-fastapi 사용해서 api 호출.
-명령어: uvicorn (파일이름):app --reload
-*파일이름: 파일 형식자 뺀 이름
+-fastapi 사용해서 Azure OpenAI api 호출. (gpt-4o)
+-명령어: "uvicorn fastapi:app --reload"
+-단독 사용 및 서버와 함께 사용 가능
 '''
 
 from fastapi import FastAPI, HTTPException
