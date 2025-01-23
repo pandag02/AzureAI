@@ -3,29 +3,34 @@ import express from 'express';
 import axios from 'axios';
 import path from 'path';
 
+//express를 통해 서버를 열 것
 const app = express();
+//서버 포트: 로컬
 const PORT = 8080;
 
 // EJS 설정
 app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
+app.set('view cache', false); //view 캐시를 사용하지 않고 언제나 새로 불러옴.
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 // FastAPI 엔드포인트
 const FASTAPI_URL = "http://localhost:8000/generate-text";
 
-// 메인 페이지 렌더링
+// 메인 페이지 렌더링, views/index.ejs 파일을 들고오게 함.
 app.get('/', (req, res) => {
-  res.render('index', { responseText: null });
+  res.render('index', { responseText: null, responseData: null });  // responseData 기본값 추가
 });
+
 
 // FastAPI 호출 및 응답 처리
 app.post('/query', async (req, res) => {
   try {
     let { text } = req.body;
-    if (typeof text !== "string" || text.trim() === "") {
+    if (typeof text !== "string" || text.trim() === "") { //입력 상자를 비워두고 전송을 눌렀을 때 이 텍스트로 전송
       text = "Tell me a fun fact about technology.";
     }
 
