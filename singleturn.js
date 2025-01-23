@@ -35,9 +35,7 @@ app.post('/query', async (req, res) => {
     }
 
     const requestData = {
-      prompt: text,
-      max_tokens: 100,
-      temperature: 0.7
+      prompt: text
     };
 
     const response = await axios.post(FASTAPI_URL, requestData, {
