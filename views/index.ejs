@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure AI Chat</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1>Azure AI와 대화</h1>
+    <form action="/query" method="POST">
+        <input type="text" name="text" placeholder="질문을 입력하세요" required>
+        <button type="submit">전송</button>
+    </form>
+    <!--답변 내용만 출력, 없을 경우에는 응답 없음을 출력하여 애러를 방지-->
+    <h2>응답:</h2>
+    <p><%= responseText || "응답이 없습니다." %></p>
+
+    <!--답변 내용이 json 형식이라서 이걸 기반으로 출력하게 됨. 없을 경우에는 데이터 없음 처리를 통해 애러를 방지-->
+    <h3>원본 데이터:</h3>
+    <pre><%= responseData ? JSON.stringify(responseData, null, 2) : "데이터 없음" %></pre>
+
+
+</body>
+</html>
