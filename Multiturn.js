@@ -40,11 +40,38 @@ app.use(express.urlencoded({ extended: true }));
 const FASTAPI_URL = "http://localhost:8000/generate-text";
 
 // 메인 페이지 렌더링
-app.get('/', (req, res) => {
-  res.render('index', { responseText: null, responseData: null });
+app.get('/', async (req, res) => {
+  try {
+    // MongoDB에서 최근 5개의 대화 내역 불러오기
+    const historyDocs = await db.collection('post')
+      .find()
+      .sort({ timestamp: 1 }) // 오래된 대화가 위쪽, 최신 대화가 아래쪽
+      .limit(5)
+      .toArray();
+
+    // MongoDB에서 가져온 데이터를 FastAPI의 messages 형식에 맞게 변환
+    const history = [];
+    historyDocs.forEach(doc => {
+      history.push({ role: "user", content: doc.prompt });
+      history.push({ role: "assistant", content: doc.generated_text });
+    });
+
+    res.render('index', {
+      responseText: null,
+      responseData: null,
+      history: history
+    });
+  } catch (error) {
+    console.error("❌ 데이터 로딩 오류:", error);
+    res.render('index', {
+      responseText: null,
+      responseData: null,
+      history: []
+    });
+  }
 });
 
-// FastAPI 호출 및 응답 저장
+// FastAPI 호출 및 응답 저장 (히스토리 포함)
 app.post('/query', async (req, res) => {
   try {
     let { text } = req.body;
@@ -52,8 +79,25 @@ app.post('/query', async (req, res) => {
       text = "Tell me a fun fact about technology.";
     }
 
-    // FastAPI에 요청 보낼 데이터
-    const requestData = { prompt: text };
+    // MongoDB에서 최근 5개의 대화 내역 불러오기
+    const historyDocs = await db.collection('post')
+      .find()
+      .sort({ timestamp: -1 }) // 최신 데이터 우선 정렬
+      .limit(5)
+      .toArray();
+
+    // 히스토리 데이터를 FastAPI의 messages 포맷에 맞게 변환
+    const history = [];
+    historyDocs.forEach(doc => {
+      history.push({ role: "user", content: doc.prompt });
+      history.push({ role: "assistant", content: doc.generated_text });
+    });
+
+    // FastAPI에 요청 보낼 데이터 (히스토리 포함)
+    const requestData = {
+      prompt: text,
+      history: history
+    };
 
     // FastAPI 호출
     const response = await axios.post(FASTAPI_URL, requestData, {
@@ -66,7 +110,10 @@ app.post('/query', async (req, res) => {
       throw new Error("Invalid API Response: Missing 'generated_text'");
     }
 
-    // MongoDB에 저장
+    // 새 히스토리 업데이트 (FastAPI 응답에 포함된 최신 히스토리 사용)
+    const updatedHistory = response.data.history;
+
+    // MongoDB에 새로운 대화 저장
     await db.collection('post').insertOne({
       prompt: text,
       generated_text: response.data.generated_text,
@@ -75,17 +122,23 @@ app.post('/query', async (req, res) => {
 
     res.render('index', {
       responseText: response.data.generated_text || "응답이 없습니다.",
-      responseData: response.data
+      responseData: response.data,
+      history: updatedHistory
     });
 
     console.log("✅ MongoDB 저장 완료:", { prompt: text, generated_text: response.data.generated_text });
+
   } catch (error) {
     console.error("❌ FastAPI 호출 오류:", error);
     if (error.response) {
       console.error("❌ 오류 응답 상태 코드:", error.response.status);
       console.error("❌ 오류 응답 데이터:", error.response.data);
     }
-    res.status(500).render('index', { responseText: "FastAPI 호출 실패.", responseData: null });
+    res.status(500).render('index', {
+      responseText: "FastAPI 호출 실패.",
+      responseData: null,
+      history: []
+    });
   }
 });
 

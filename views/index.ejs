@@ -8,18 +8,30 @@
 </head>
 <body>
     <h1>Azure AI와 대화</h1>
+    
+    <!-- 질문 입력 폼 -->
     <form action="/query" method="POST">
         <input type="text" name="text" placeholder="질문을 입력하세요" required>
         <button type="submit">전송</button>
     </form>
-    <!--답변 내용만 출력, 없을 경우에는 응답 없음을 출력하여 애러를 방지-->
+
+    <!-- FastAPI 응답 출력 -->
     <h2>응답:</h2>
     <p><%= responseText || "응답이 없습니다." %></p>
 
-    <!--답변 내용이 json 형식이라서 이걸 기반으로 출력하게 됨. 없을 경우에는 데이터 없음 처리를 통해 애러를 방지-->
-    <h3>원본 데이터:</h3>
-    <pre><%= responseData ? JSON.stringify(responseData, null, 2) : "데이터 없음" %></pre>
-
+    <!-- 대화 히스토리 출력 -->
+    <% if (history && history.length > 0) { %>
+        <h2>이전 대화 기록</h2>
+        <ul>
+            <% history.forEach(msg => { %>  <!-- 최신 대화가 아래쪽에 오도록 변경 -->
+                <% if (msg.role === "user") { %>
+                    <li><strong>사용자:</strong> <%= msg.content %></li>
+                <% } else if (msg.role === "assistant") { %>
+                    <li><strong>AI:</strong> <%= msg.content %></li>
+                <% } %>
+            <% }) %>
+        </ul>
+    <% } %>
 
 </body>
 </html>
